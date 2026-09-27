@@ -1,0 +1,1177 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AVL Tree Visualizer</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        header {
+            background: #1f2937;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        header p {
+            margin: 8px 0 0;
+            color: #d1d5db;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 25px auto;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        input {
+            padding: 10px;
+            width: 180px;
+            font-size: 16px;
+            border: 1px solid #aaa;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            background: #2563eb;
+            color: white;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .delete {
+            background: #dc2626;
+        }
+
+        .delete:hover {
+            background: #b91c1c;
+        }
+
+        .search {
+            background: #16a34a;
+        }
+
+        .search:hover {
+            background: #15803d;
+        }
+
+        .clear {
+            background: #6b7280;
+        }
+
+        .clear:hover {
+            background: #4b5563;
+        }
+
+        .message {
+            margin-top: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 17px;
+            min-height: 50px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .tree-container {
+            margin-top: 20px;
+            background: white;
+            border-radius: 12px;
+            min-height: 550px;
+            padding: 30px;
+            overflow: auto;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        svg {
+            width: 100%;
+            min-width: 800px;
+            height: 500px;
+        }
+
+        .node circle {
+            fill: #2563eb;
+            stroke: #1e3a8a;
+            stroke-width: 3;
+        }
+
+        .node text {
+            fill: white;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+
+        .node .node-info {
+    fill: #111827;
+    font-size: 12px;
+    font-weight: bold;
+    text-anchor: middle;
+}
+
+        .edge {
+            stroke: #6b7280;
+            stroke-width: 2;
+        }
+
+        .legend {
+            margin-top: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .legend h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>AVL Tree Visualizer</h1>
+    <p>Insert, Delete, Search and Visualize AVL Tree Rotations</p>
+</header>
+
+<div class="container">
+
+    <div class="controls">
+
+        <input
+            type="number"
+            id="valueInput"
+            placeholder="Enter value"
+        >
+
+        <button onclick="insertValue()">
+            Insert
+        </button>
+
+        <button class="delete" onclick="deleteValue()">
+            Delete
+        </button>
+
+        <button class="search" onclick="searchValue()">
+            Search
+        </button>
+
+        <button class="clear" onclick="clearTree()">
+            Clear Tree
+        </button>
+
+    </div>
+
+    <div class="message" id="message">
+        Enter a value and choose an operation.
+    </div>
+
+    <div class="tree-container">
+
+        <svg id="treeSvg">
+        </svg>
+
+    </div>
+
+    <div class="legend">
+
+        <h3>Node Information</h3>
+
+        <p>
+            <b>Height:</b>
+            Height of the node in the AVL tree.
+        </p>
+
+        <p>
+            <b>Balance Factor:</b>
+            height(left subtree) - height(right subtree)
+        </p>
+
+        <p>
+            AVL condition:
+            <b>-1 ≤ Balance Factor ≤ 1</b>
+        </p>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // ==============================
+    // AVL NODE
+    // ==============================
+
+    class AVLNode {
+
+        constructor(value) {
+
+            this.value = value;
+
+            this.left = null;
+
+            this.right = null;
+
+            this.height = 1;
+        }
+    }
+
+
+    // Root of AVL tree
+
+    let root = null;
+
+
+    // ==============================
+    // HEIGHT
+    // ==============================
+
+    function getHeight(node) {
+
+        if (node === null) {
+            return 0;
+        }
+
+        return node.height;
+    }
+
+
+    // ==============================
+    // BALANCE FACTOR
+    // ==============================
+
+    function getBalance(node) {
+
+        if (node === null) {
+            return 0;
+        }
+
+        return getHeight(node.left)
+             - getHeight(node.right);
+    }
+
+
+    // ==============================
+    // UPDATE HEIGHT
+    // ==============================
+
+    function updateHeight(node) {
+        node.height =
+            1 +
+            Math.max(
+                getHeight(node.left),
+                getHeight(node.right)
+            );
+    }
+
+
+    // ==============================
+    // RIGHT ROTATION
+    // ==============================
+
+    function rightRotate(y) {
+
+        let x = y.left;
+
+        let T2 = x.right;
+
+
+        // Rotation
+
+        x.right = y;
+
+        y.left = T2;
+
+
+        // Update heights
+
+        updateHeight(y);
+
+        updateHeight(x);
+
+
+        return x;
+    }
+
+
+    // ==============================
+    // LEFT ROTATION
+    // ==============================
+
+    function leftRotate(x) {
+
+        let y = x.right;
+
+        let T2 = y.left;
+
+
+        // Rotation
+
+        y.left = x;
+
+        x.right = T2;
+
+
+        // Update heights
+
+        updateHeight(x);
+
+        updateHeight(y);
+
+
+        return y;
+    }
+
+
+    // ==============================
+    // INSERT
+    // ==============================
+
+    function insert(node, value) {
+
+        // Normal BST insertion
+
+        if (node === null) {
+
+            return new AVLNode(value);
+        }
+
+
+        if (value < node.value) {
+
+            node.left =
+                insert(node.left, value);
+
+        }
+
+        else if (value > node.value) {
+
+            node.right =
+                insert(node.right, value);
+
+        }
+
+        else {
+
+            return node;
+        }
+
+
+        // Update height
+
+        updateHeight(node);
+
+
+        // Calculate balance
+
+        let balance =
+            getBalance(node);
+
+
+        // =========================
+        // LL CASE
+        // =========================
+
+        if (balance > 1 &&
+            value < node.left.value) {
+
+            showMessage(
+                "LL Case → Right Rotation at " +
+                node.value
+            );
+
+            return rightRotate(node);
+        }
+
+
+        // =========================
+        // RR CASE
+        // =========================
+
+        if (balance < -1 &&
+            value > node.right.value) {
+
+            showMessage(
+                "RR Case → Left Rotation at " +
+                node.value
+            );
+
+            return leftRotate(node);
+        }
+
+
+        // =========================
+        // LR CASE
+        // =========================
+
+        if (balance > 1 &&
+            value > node.left.value) {
+
+            showMessage(
+                "LR Case → Left Rotation + Right Rotation at " +
+                node.value
+            );
+
+            node.left =
+                leftRotate(node.left);
+
+            return rightRotate(node);
+        }
+
+
+        // =========================
+        // RL CASE
+        // =========================
+
+        if (balance < -1 &&
+            value < node.right.value) {
+
+            showMessage(
+                "RL Case → Right Rotation + Left Rotation at " +
+                node.value
+            );
+
+            node.right =
+                rightRotate(node.right);
+
+            return leftRotate(node);
+        }
+
+
+        return node;
+    }
+
+
+    // ==============================
+    // MINIMUM NODE
+    // ==============================
+
+    function getMinValueNode(node) {
+
+        let current = node;
+
+        while (current.left !== null) {
+
+            current = current.left;
+        }
+
+        return current;
+    }
+
+
+    // ==============================
+    // DELETE
+    // ==============================
+
+    function deleteNode(node, value) {
+
+        if (node === null) {
+
+            return node;
+        }
+
+
+        // Search left
+
+        if (value < node.value) {
+
+            node.left =
+                deleteNode(node.left, value);
+        }
+
+
+        // Search right
+
+        else if (value > node.value) {
+
+            node.right =
+                deleteNode(node.right, value);
+        }
+
+
+        // Node found
+
+        else {
+
+            // No child
+
+            if (
+                node.left === null &&
+                node.right === null
+            ) {
+
+                return null;
+            }
+
+
+            // Only right child
+
+            else if (node.left === null) {
+
+                node = node.right;
+            }
+
+
+            // Only left child
+
+            else if (node.right === null) {
+
+                node = node.left;
+            }
+
+
+            // Two children
+
+            else {
+
+                let temp =
+                    getMinValueNode(node.right);
+
+                node.value =
+                    temp.value;
+
+                node.right =
+                    deleteNode(
+                        node.right,
+                        temp.value
+                    );
+            }
+        }
+
+
+        // Update height
+
+        updateHeight(node);
+
+
+        // Balance factor
+
+        let balance =
+            getBalance(node);
+
+
+        // LL
+
+        if (
+            balance > 1 &&
+            getBalance(node.left) >= 0
+        ) {
+
+            showMessage(
+                "LL Case → Right Rotation"
+            );
+
+            return rightRotate(node);
+        }
+
+
+        // LR
+
+        if (
+            balance > 1 &&
+            getBalance(node.left) < 0
+        ) {
+
+            showMessage(
+                "LR Case → Left + Right Rotation"
+            );
+
+            node.left =
+                leftRotate(node.left);
+
+            return rightRotate(node);
+        }
+
+
+        // RR
+
+        if (
+            balance < -1 &&
+            getBalance(node.right) <= 0
+        ) {
+
+            showMessage(
+                "RR Case → Left Rotation"
+            );
+
+            return leftRotate(node);
+        }
+
+
+        // RL
+
+        if (
+            balance < -1 &&
+            getBalance(node.right) > 0
+        ) {
+
+            showMessage(
+                "RL Case → Right + Left Rotation"
+            );
+
+            node.right =
+                rightRotate(node.right);
+
+            return leftRotate(node);
+        }
+
+
+        return node;
+    }
+
+
+    // ==============================
+    // INSERT BUTTON
+    // ==============================
+
+    function insertValue() {
+
+        let input =
+            document.getElementById("valueInput");
+
+        let value =
+            parseInt(input.value);
+
+
+        if (isNaN(value)) {
+
+            showMessage(
+                "Please enter a valid number."
+            );
+
+            return;
+        }
+
+
+        // Check duplicate
+
+        if (findNode(root, value)) {
+
+            showMessage(
+                value + " already exists."
+            );
+
+            return;
+        }
+
+
+        root =
+            insert(root, value);
+
+
+        if (!document.getElementById("message")
+                .innerText.includes("Case")) {
+
+            showMessage(
+                value + " inserted successfully."
+            );
+        }
+
+
+        drawTree();
+
+        input.value = "";
+    }
+
+
+    // ==============================
+    // DELETE BUTTON
+    // ==============================
+
+    function deleteValue() {
+
+        let input =
+            document.getElementById("valueInput");
+
+        let value =
+            parseInt(input.value);
+
+
+        if (isNaN(value)) {
+
+            showMessage(
+                "Please enter a valid number."
+            );
+
+            return;
+        }
+
+
+        if (!findNode(root, value)) {
+
+            showMessage(
+                value + " not found."
+            );
+
+            return;
+        }
+
+
+        root =
+            deleteNode(root, value);
+
+
+        showMessage(
+            value + " deleted successfully."
+        );
+
+
+        drawTree();
+
+        input.value = "";
+    }
+
+
+    // ==============================
+    // SEARCH
+    // ==============================
+
+    function searchValue() {
+
+        let input =
+            document.getElementById("valueInput");
+
+        let value =
+            parseInt(input.value);
+
+
+        if (isNaN(value)) {
+
+            showMessage(
+                "Please enter a valid number."
+            );
+
+            return;
+        }
+
+
+        if (findNode(root, value)) {
+
+            showMessage(
+                "✓ " + value + " found in AVL Tree."
+            );
+
+        }
+
+        else {
+
+            showMessage(
+                "✗ " + value + " not found."
+            );
+        }
+    }
+
+
+    // ==============================
+    // FIND NODE
+    // ==============================
+
+    function findNode(node, value) {
+
+        if (node === null) {
+
+            return false;
+        }
+
+
+        if (node.value === value) {
+
+            return true;
+        }
+
+
+        if (value < node.value) {
+
+            return findNode(
+                node.left,
+                value
+            );
+        }
+
+
+        return findNode(
+            node.right,
+            value
+        );
+    }
+
+
+    // ==============================
+    // CLEAR TREE
+    // ==============================
+
+    function clearTree() {
+
+        root = null;
+
+        showMessage(
+            "AVL Tree cleared."
+        );
+
+        drawTree();
+    }
+
+
+    // ==============================
+    // MESSAGE
+    // ==============================
+
+    function showMessage(message) {
+
+        document.getElementById("message")
+            .innerText = message;
+    }
+
+
+    // ==============================
+    // DRAW TREE
+    // ==============================
+
+    function drawTree() {
+
+        let svg =
+            document.getElementById("treeSvg");
+
+
+        svg.innerHTML = "";
+
+
+        if (root === null) {
+
+            return;
+        }
+
+
+        let positions = [];
+
+        let levelGap = 90;
+
+
+        // Calculate positions
+
+        function calculatePosition(
+            node,
+            x,
+            y,
+            horizontalGap
+        ) {
+
+            if (node === null) {
+
+                return;
+            }
+
+
+            positions.push({
+                node: node,
+                x: x,
+                y: y
+            });
+
+
+            calculatePosition(
+                node.left,
+                x - horizontalGap,
+                y + levelGap,
+                horizontalGap / 2
+            );
+
+
+            calculatePosition(
+                node.right,
+                x + horizontalGap,
+                y + levelGap,
+                horizontalGap / 2
+            );
+        }
+
+
+        calculatePosition(
+            root,
+            400,
+            50,
+            180
+        );
+
+
+        // ==========================
+        // DRAW EDGES
+        // ==========================
+
+        positions.forEach(item => {
+
+            let node = item.node;
+
+
+            if (node.left !== null) {
+
+                let child =
+                    positions.find(
+                        p => p.node === node.left
+                    );
+
+
+                drawLine(
+                    svg,
+                    item.x,
+                    item.y,
+                    child.x,
+                    child.y
+                );
+            }
+
+
+            if (node.right !== null) {
+
+                let child =
+                    positions.find(
+                        p => p.node === node.right
+                    );
+
+
+                drawLine(
+                    svg,
+                    item.x,
+                    item.y,
+                    child.x,
+                    child.y
+                );
+            }
+
+        });
+
+
+        // ==========================
+        // DRAW NODES
+        // ==========================
+
+        positions.forEach(item => {
+
+            drawNode(
+                svg,
+                item.node,
+                item.x,
+                item.y
+            );
+
+        });
+
+    }
+
+
+    // ==============================
+    // DRAW LINE
+    // ==============================
+
+    function drawLine(
+        svg,
+        x1,
+        y1,
+        x2,
+        y2
+    ) {
+
+        let line =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "line"
+            );
+
+
+        line.setAttribute(
+            "x1",
+            x1
+        );
+
+        line.setAttribute(
+            "y1",
+            y1
+        );
+
+        line.setAttribute(
+            "x2",
+            x2
+        );
+
+        line.setAttribute(
+            "y2",
+            y2
+        );
+
+
+        line.setAttribute(
+            "class",
+            "edge"
+        );
+
+
+        svg.appendChild(line);
+    }
+
+
+    // ==============================
+    // DRAW NODE
+    // ==============================
+
+    function drawNode(
+        svg,
+        node,
+        x,
+        y
+    ) {
+
+        let group =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "g"
+            );
+
+
+        group.setAttribute(
+            "class",
+            "node"
+        );
+
+
+        // Circle
+
+        let circle =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "circle"
+            );
+
+
+        circle.setAttribute(
+            "cx",
+            x
+        );
+
+        circle.setAttribute(
+            "cy",
+            y
+        );
+
+        circle.setAttribute(
+            "r",
+            28
+        );
+
+
+        group.appendChild(circle);
+
+
+        // Value
+
+        let text =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "text"
+            );
+
+
+        text.setAttribute(
+            "x",
+            x
+        );
+
+        text.setAttribute(
+            "y",
+            y
+        );
+
+
+        text.textContent =
+            node.value;
+
+
+        group.appendChild(text);
+
+
+        // Height and balance factor
+
+        let info =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "text"
+            );
+
+
+        info.setAttribute(
+            "x",
+            x
+        );
+
+        info.setAttribute(
+            "y",
+            y + 45
+        );
+
+
+        info.setAttribute(
+            "class",
+            "node-info"
+        );
+
+
+        info.textContent =
+            "H:" +
+            node.height +
+            "  BF:" +
+            getBalance(node);
+
+
+        group.appendChild(info);
+
+
+        svg.appendChild(group);
+    }
+
+
+    // Draw empty tree initially
+
+    drawTree();
+
+</script>
+
+</body>
+</html>
+```
